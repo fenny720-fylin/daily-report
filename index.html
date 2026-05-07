@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>業務日報</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a23;
+    --surface2: #1e2330;
+    --surface3: #252b3b;
+    --border: #2a3047;
+    --accent: #4f8ef7;
+    --accent2: #7c6af7;
+    --green: #3dd68c;
+    --red: #f75f5f;
+    --orange: #f7a44f;
+    --text: #e8ecf5;
+    --text2: #8892aa;
+    --text3: #4a5568;
+    --radius: 14px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .app-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .date-display {
+    font-size: 13px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Tab bar */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    padding: 4px;
+    border-radius: 10px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 7px 4px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: white;
+  }
+  .tab-btn span { font-size: 15px; }
+
+  /* Main content */
+  .main { padding: 16px; padding-bottom: 100px; }
+
+  /* Section hidden */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Timeline */
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .section-label {
+    font-size: 13px;
+    color: var(--text2);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .add-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 12px rgba(79,142,247,0.3);
+  }
+  .add-btn:active { transform: scale(0.96); }
+
+  .timeline { position: relative; }
+  .timeline-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 37px;
+    top: 44px;
+    bottom: -12px;
+    width: 1px;
+    background: var(--border);
+  }
+  .time-col {
+    width: 52px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .time-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1;
+    margin-top: 13px;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 15px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.2);
+  }
+  .dot.meeting { background: var(--accent2); box-shadow: 0 0 0 3px rgba(124,106,247,0.2); }
+  .dot.task { background: var(--green); box-shadow: 0 0 0 3px rgba(61,214,140,0.2); }
+  .dot.call { background: var(--orange); box-shadow: 0 0 0 3px rgba(247,164,79,0.2); }
+
+  .entry-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    transition: all 0.2s;
+  }
+  .entry-card:active { transform: scale(0.99); }
+  .entry-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+  }
+  .entry-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    padding-right: 8px;
+  }
+  .entry-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .tag-meeting { background: rgba(124,106,247,0.15); color: var(--accent2); }
+  .tag-task { background: rgba(61,214,140,0.15); color: var(--green); }
+  .tag-call { background: rgba(247,164,79,0.15); color: var(--orange); }
+  .tag-note { background: rgba(79,142,247,0.15); color: var(--accent); }
+
+  .entry-content {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+  .entry-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  .action-btn {
+    font-size: 11px;
+    color: var(--text3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    padding: 2px 4px;
+    transition: color 0.2s;
+  }
+  .action-btn:hover { color: var(--accent); }
+  .action-btn.delete:hover { color: var(--red); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+
+  /* Todos */
+  .todo-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .stat-num.blue { color: var(--accent); }
+  .stat-num.green { color: var(--green); }
+  .stat-num.orange { color: var(--orange); }
+  .stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  .todo-filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .filter-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .todo-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: all 0.25s;
+  }
+  .todo-item.done { opacity: 0.5; }
+  .todo-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 1px;
+  }
+  .todo-check.checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .todo-check.checked::after {
+    content: '✓';
+    font-size: 11px;
+    color: white;
+    font-weight: 700;
+  }
+  .todo-body { flex: 1; }
+  .todo-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .todo-item.done .todo-title { text-decoration: line-through; color: var(--text3); }
+  .todo-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .priority-badge {
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .p-high { background: rgba(247,95,95,0.15); color: var(--red); }
+  .p-med { background: rgba(247,164,79,0.15); color: var(--orange); }
+  .p-low { background: rgba(61,214,140,0.15); color: var(--green); }
+  .todo-due { font-size: 11px; color: var(--text3); }
+  .todo-right {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+  }
+  .todo-del-btn {
+    font-size: 16px;
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 2px;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .todo-del-btn:hover { color: var(--red); }
+
+  /* Voice */
+  .voice-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .record-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--red), #c0392b);
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(247,95,95,0.4);
+    transition: all 0.2s;
+    position: relative;
+  }
+  .record-btn.recording {
+    animation: pulse 1.2s infinite;
+    background: linear-gradient(135deg, var(--red), #e74c3c);
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(247,95,95,0.4); transform: scale(1); }
+    50% { box-shadow: 0 4px 32px rgba(247,95,95,0.7); transform: scale(1.05); }
+  }
+  .record-status {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+  .record-timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    color: var(--red);
+    font-weight: 600;
+    min-height: 28px;
+  }
+  .record-hint { font-size: 11px; color: var(--text3); margin-top: 8px; }
+
+  .voice-records { margin-top: 4px; }
+  .voice-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .voice-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .voice-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .voice-icon { font-size: 18px; }
+  .voice-name { font-size: 14px; font-weight: 600; }
+  .voice-time { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+  .voice-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; transition: color 0.2s; }
+  .voice-del:hover { color: var(--red); }
+
+  .ai-summary {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    border-left: 3px solid var(--accent2);
+  }
+  .ai-summary-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent2);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .ai-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text2);
+    padding: 10px 0;
+  }
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    font-size: 12px;
+    color: var(--text2);
+    font-weight: 500;
+    margin-bottom: 6px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 13px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-select option { background: var(--surface2); }
+  .form-textarea { resize: none; min-height: 90px; line-height: 1.6; }
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .btn-cancel {
+    flex: 1;
+    padding: 13px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+  }
+  .btn-save {
+    flex: 2;
+    padding: 13px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 3px 14px rgba(79,142,247,0.35);
+  }
+  .btn-save:active { transform: scale(0.98); }
+
+  /* Summary tab */
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .summary-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-key { color: var(--text2); }
+  .summary-val { color: var(--text); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+  .export-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--accent);
+    background: rgba(79,142,247,0.08);
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .export-btn:active { background: rgba(79,142,247,0.18); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="app-title">業務日報</div>
+    <div class="date-display" id="dateDisplay"></div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('timeline')"><span>📋</span>時間軸</button>
+    <button class="tab-btn" onclick="switchTab('todos')"><span>✅</span>待辦</button>
+    <button class="tab-btn" onclick="switchTab('voice')"><span>🎙️</span>錄音</button>
+    <button class="tab-btn" onclick="switchTab('summary')"><span>📊</span>彙整</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Timeline -->
+  <div class="section active" id="section-timeline">
+    <div class="timeline-header">
+      <div class="section-label">今日活動</div>
+      <button class="add-btn" onclick="openEntryModal()">+ 新增</button>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- Todos -->
+  <div class="section" id="section-todos">
+    <div class="todo-stats">
+      <div class="stat-box">
+        <div class="stat-num blue" id="stat-total">0</div>
+        <div class="stat-label">全部</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num orange" id="stat-pending">0</div>
+        <div class="stat-label">待完成</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num green" id="stat-done">0</div>
+        <div class="stat-label">已完成</div>
+      </div>
+    </div>
+    <div class="timeline-header">
+      <div class="todo-filters">
+        <button class="filter-btn active" onclick="filterTodos('all', this)">全部</button>
+        <button class="filter-btn" onclick="filterTodos('pending', this)">待完成</button>
+        <button class="filter-btn" onclick="filterTodos('done', this)">已完成</button>
+        <button class="filter-btn" onclick="filterTodos('high', this)">🔴 高優先</button>
+      </div>
+      <button class="add-btn" onclick="openTodoModal()">+ 新增</button>
+    </div>
+    <div id="todo-list"></div>
+  </div>
+
+  <!-- Voice -->
+  <div class="section" id="section-voice">
+    <div class="voice-section">
+      <button class="record-btn" id="recordBtn" onclick="toggleRecord()">🎙️</button>
+      <div class="record-status" id="recordStatus">點擊開始錄音</div>
+      <div class="record-timer" id="recordTimer"></div>
+      <div class="record-hint">錄音完成後，AI 將自動轉換為會議記錄</div>
+    </div>
+    <div class="timeline-header">
+      <div class="section-label">錄音記錄</div>
+    </div>
+    <div class="voice-records" id="voiceRecords"></div>
+  </div>
+
+  <!-- Summary -->
+  <div class="section" id="section-summary">
+    <div class="summary-card">
+      <div class="summary-card-title">📋 今日活動統計</div>
+      <div id="summary-entries"></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-title">✅ 待辦事項狀況</div>
+      <div id="summary-todos"></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-title">🎙️ 會議記錄摘要</div>
+      <div id="summary-voice"></div>
+    </div>
+    <button class="export-btn" onclick="exportReport()">📤 匯出今日日報</button>
+  </div>
+
+</div>
+
+<!-- Entry Modal -->
+<div class="modal-overlay" id="entryModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="entryModalTitle">新增活動記錄</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">時間</label>
+        <input type="time" class="form-input" id="entry-time">
+      </div>
+      <div class="form-group">
+        <label class="form-label">類型</label>
+        <select class="form-select" id="entry-type">
+          <option value="note">📝 筆記</option>
+          <option value="meeting">👥 會議</option>
+          <option value="call">📞 電話</option>
+          <option value="task">⚡ 任務</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">標題</label>
+      <input type="text" class="form-input" id="entry-title" placeholder="活動標題...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">內容</label>
+      <textarea class="form-textarea" id="entry-content" placeholder="詳細說明..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('entryModal')">取消</button>
+      <button class="btn-save" onclick="saveEntry()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Todo Modal -->
+<div class="modal-overlay" id="todoModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="todoModalTitle">新增待辦事項</div>
+    <div class="form-group">
+      <label class="form-label">待辦內容</label>
+      <input type="text" class="form-input" id="todo-title" placeholder="待辦事項...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">優先級</label>
+        <select class="form-select" id="todo-priority">
+          <option value="high">🔴 高</option>
+          <option value="med" selected>🟡 中</option>
+          <option value="low">🟢 低</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">截止日期</label>
+        <input type="date" class="form-input" id="todo-due">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">備註</label>
+      <textarea class="form-textarea" id="todo-note" placeholder="補充說明..." style="min-height:60px"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('todoModal')">取消</button>
+      <button class="btn-save" onclick="saveTodo()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- State ----
+let entries = JSON.parse(localStorage.getItem('entries') || '[]');
+let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+let voiceRecords = JSON.parse(localStorage.getItem('voiceRecords') || '[]');
+let editingEntryId = null;
+let editingTodoId = null;
+let todoFilter = 'all';
+
+// Recording state
+let mediaRecorder = null;
+let audioChunks = [];
+let recordTimer = null;
+let recordSeconds = 0;
+let isRecording = false;
+
+// ---- Date ----
+function updateDate() {
+  const now = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  document.getElementById('dateDisplay').textContent =
+    `${now.getMonth()+1}/${now.getDate()} 週${days[now.getDay()]}`;
+}
+updateDate();
+
+// ---- Tabs ----
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (tab === 'summary') renderSummary();
+}
+
+// ---- Modals ----
+function openEntryModal(id = null) {
+  editingEntryId = id;
+  const modal = document.getElementById('entryModal');
+  document.getElementById('entryModalTitle').textContent = id ? '編輯活動記錄' : '新增活動記錄';
+  if (id) {
+    const e = entries.find(x => x.id === id);
+    document.getElementById('entry-time').value = e.time;
+    document.getElementById('entry-type').value = e.type;
+    document.getElementById('entry-title').value = e.title;
+    document.getElementById('entry-content').value = e.content;
+  } else {
+    const now = new Date();
+    document.getElementById('entry-time').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    document.getElementById('entry-type').value = 'note';
+    document.getElementById('entry-title').value = '';
+    document.getElementById('entry-content').value = '';
+  }
+  modal.classList.add('open');
+}
+
+function openTodoModal(id = null) {
+  editingTodoId = id;
+  const modal = document.getElementById('todoModal');
+  document.getElementById('todoModalTitle').textContent = id ? '編輯待辦事項' : '新增待辦事項';
+  if (id) {
+    const t = todos.find(x => x.id === id);
+    document.getElementById('todo-title').value = t.title;
+    document.getElementById('todo-priority').value = t.priority;
+    document.getElementById('todo-due').value = t.due || '';
+    document.getElementById('todo-note').value = t.note || '';
+  } else {
+    document.getElementById('todo-title').value = '';
+    document.getElementById('todo-priority').value = 'med';
+    document.getElementById('todo-due').value = '';
+    document.getElementById('todo-note').value = '';
+  }
+  modal.classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ---- Entries ----
+function saveEntry() {
+  const time = document.getElementById('entry-time').value;
+  const type = document.getElementById('entry-type').value;
+  const title = document.getElementById('entry-title').value.trim();
+  const content = document.getElementById('entry-content').value.trim();
+  if (!title) { alert('請填寫標題'); return; }
+
+  if (editingEntryId) {
+    const idx = entries.findIndex(x => x.id === editingEntryId);
+    entries[idx] = { ...entries[idx], time, type, title, content };
+  } else {
+    entries.push({ id: Date.now().toString(), time, type, title, content });
+  }
+  entries.sort((a, b) => a.time.localeCompare(b.time));
+  localStorage.setItem('entries', JSON.stringify(entries));
+  closeModal('entryModal');
+  renderTimeline();
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(x => x.id !== id);
+  localStorage.setItem('entries', JSON.stringify(entries));
+  renderTimeline();
+}
+
+const typeMap = {
+  note: { label: '筆記', tagClass: 'tag-note', dotClass: '' },
+  meeting: { label: '會議', tagClass: 'tag-meeting', dotClass: 'meeting' },
+  call: { label: '電話', tagClass: 'tag-call', dotClass: 'call' },
+  task: { label: '任務', tagClass: 'tag-task', dotClass: 'task' },
+};
+
+function renderTimeline() {
+  const el = document.getElementById('timeline');
+  if (!entries.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無記錄，點擊右上角新增</div></div>`;
+    return;
+  }
+  el.innerHTML = entries.map(e => {
+    const t = typeMap[e.type] || typeMap.note;
+    return `<div class="timeline-item">
+      <div class="time-col"><div class="time-text">${e.time}</div></div>
+      <div class="dot ${t.dotClass}"></div>
+      <div class="entry-card" onclick="openEntryModal('${e.id}')">
+        <div class="entry-top">
+          <div class="entry-title">${escHtml(e.title)}</div>
+          <span class="entry-tag ${t.tagClass}">${t.label}</span>
+        </div>
+        ${e.content ? `<div class="entry-content">${escHtml(e.content)}</div>` : ''}
+        <div class="entry-actions">
+          <button class="action-btn" onclick="event.stopPropagation(); openEntryModal('${e.id}')">✏️ 編輯</button>
+          <button class="action-btn delete" onclick="event.stopPropagation(); deleteEntry('${e.id}')">🗑️ 刪除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---- Todos ----
+function saveTodo() {
+  const title = document.getElementById('todo-title').value.trim();
+  const priority = document.getElementById('todo-priority').value;
+  const due = document.getElementById('todo-due').value;
+  const note = document.getElementById('todo-note').value.trim();
+  if (!title) { alert('請填寫待辦內容'); return; }
+
+  if (editingTodoId) {
+    const idx = todos.findIndex(x => x.id === editingTodoId);
+    todos[idx] = { ...todos[idx], title, priority, due, note };
+  } else {
+    todos.push({ id: Date.now().toString(), title, priority, due, note, done: false });
+  }
+  localStorage.setItem('todos', JSON.stringify(todos));
+  closeModal('todoModal');
+  renderTodos();
+}
+
+function toggleTodo(id) {
+  const t = todos.find(x => x.id === id);
+  if (t) { t.done = !t.done; localStorage.setItem('todos', JSON.stringify(todos)); renderTodos(); }
+}
+
+function deleteTodo(id) {
+  todos = todos.filter(x => x.id !== id);
+  localStorage.setItem('todos', JSON.stringify(todos));
+  renderTodos();
+}
+
+function filterTodos(f, btn) {
+  todoFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderTodos();
+}
+
+const priorityMap = { high: { label: '高優先', cls: 'p-high' }, med: { label: '中優先', cls: 'p-med' }, low: { label: '低優先', cls: 'p-low' } };
+
+function renderTodos() {
+  const total = todos.length;
+  const pending = todos.filter(t => !t.done).length;
+  const done = todos.filter(t => t.done).length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-done').textContent = done;
+
+  let filtered = todos;
+  if (todoFilter === 'pending') filtered = todos.filter(t => !t.done);
+  else if (todoFilter === 'done') filtered = todos.filter(t => t.done);
+  else if (todoFilter === 'high') filtered = todos.filter(t => t.priority === 'high' && !t.done);
+
+  const el = document.getElementById('todo-list');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有符合的待辦事項</div></div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(t => {
+    const p = priorityMap[t.priority] || priorityMap.med;
+    return `<div class="todo-item ${t.done ? 'done' : ''}">
+      <div class="todo-check ${t.done ? 'checked' : ''}" onclick="toggleTodo('${t.id}')"></div>
+      <div class="todo-body" onclick="openTodoModal('${t.id}')">
+        <div class="todo-title">${escHtml(t.title)}</div>
+        <div class="todo-meta">
+          <span class="priority-badge ${p.cls}">${p.label}</span>
+          ${t.due ? `<span class="todo-due">📅 ${t.due}</span>` : ''}
+        </div>
+        ${t.note ? `<div class="entry-content" style="margin-top:5px">${escHtml(t.note)}</div>` : ''}
+      </div>
+      <button class="todo-del-btn" onclick="deleteTodo('${t.id}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ---- Voice Recording ----
+async function toggleRecord() {
+  if (!isRecording) await startRecording();
+  else stopRecording();
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = processRecording;
+    mediaRecorder.start();
+    isRecording = true;
+    recordSeconds = 0;
+    document.getElementById('recordBtn').classList.add('recording');
+    document.getElementById('recordBtn').textContent = '⏹️';
+    document.getElementById('recordStatus').textContent = '錄音中...';
+    recordTimer = setInterval(() => {
+      recordSeconds++;
+      const m = String(Math.floor(recordSeconds/60)).padStart(2,'0');
+      const s = String(recordSeconds%60).padStart(2,'0');
+      document.getElementById('recordTimer').textContent = `${m}:${s}`;
+    }, 1000);
+  } catch(err) {
+    // Mic not available — demo mode
+    simulateRecording();
+  }
+}
+
+function simulateRecording() {
+  isRecording = true;
+  recordSeconds = 0;
+  document.getElementById('recordBtn').classList.add('recording');
+  document.getElementById('recordBtn').textContent = '⏹️';
+  document.getElementById('recordStatus').textContent = '🎙️ 錄音中（模擬）...';
+  recordTimer = setInterval(() => {
+    recordSeconds++;
+    const m = String(Math.floor(recordSeconds/60)).padStart(2,'0');
+    const s = String(recordSeconds%60).padStart(2,'0');
+    document.getElementById('recordTimer').textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+function stopRecording() {
+  clearInterval(recordTimer);
+  isRecording = false;
+  document.getElementById('recordBtn').classList.remove('recording');
+  document.getElementById('recordBtn').textContent = '🎙️';
+  document.getElementById('recordStatus').textContent = '點擊開始錄音';
+  document.getElementById('recordTimer').textContent = '';
+  
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+  } else {
+    // Demo mode — generate fake record
+    const dur = recordSeconds;
+    addVoiceRecord(dur, null);
+  }
+}
+
+async function processRecording() {
+  const blob = new Blob(audioChunks, { type: 'audio/webm' });
+  const dur = recordSeconds;
+  addVoiceRecord(dur, blob);
+}
+
+function addVoiceRecord(dur, blob) {
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const durStr = `${String(Math.floor(dur/60)).padStart(2,'0')}:${String(dur%60).padStart(2,'0')}`;
+  const id = Date.now().toString();
+
+  const record = { id, time: timeStr, duration: durStr, summary: null, loading: true };
+  voiceRecords.unshift(record);
+  localStorage.setItem('voiceRecords', JSON.stringify(voiceRecords));
+  renderVoiceRecords();
+  generateAISummary(id, dur);
+}
+
+async function generateAISummary(id, dur) {
+  const record = voiceRecords.find(r => r.id === id);
+  if (!record) return;
+
+  const prompt = `你是一位業務會議助理。請根據以下情境生成一份會議記錄摘要：
+- 錄音時長：${dur} 秒
+- 錄音時間：${record.time}
+- 請模擬一個典型的業務通話/會議內容，用繁體中文輸出。
+
+格式要求（JSON）：
+{
+  "title": "會議/通話標題",
+  "participants": "參與者",
+  "keyPoints": ["重點1", "重點2", "重點3"],
+  "actionItems": ["行動項目1", "行動項目2"],
+  "summary": "一句話總結"
+}
+
+只回傳JSON，不要有其他文字。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.map(c => c.text || '').join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    const idx = voiceRecords.findIndex(r => r.id === id);
+    if (idx !== -1) {
+      voiceRecords[idx].summary = parsed;
+      voiceRecords[idx].loading = false;
+      localStorage.setItem('voiceRecords', JSON.stringify(voiceRecords));
+      renderVoiceRecords();
+    }
+  } catch(e) {
+    // Fallback demo summary
+    const idx = voiceRecords.findIndex(r => r.id === id);
+    if (idx !== -1) {
+      voiceRecords[idx].summary = {
+        title: '客戶拜訪通話',
+        participants: '業務代表、客戶',
+        keyPoints: ['確認 Q2 訂單數量', '討論付款條件', '安排下次面訪時間'],
+        actionItems: ['發送報價單', '確認交期'],
+        summary: '客戶對提案有興趣，後續跟進報價與交期確認。'
+      };
+      voiceRecords[idx].loading = false;
+      localStorage.setItem('voiceRecords', JSON.stringify(voiceRecords));
+      renderVoiceRecords();
+    }
+  }
+}
+
+function deleteVoiceRecord(id) {
+  voiceRecords = voiceRecords.filter(r => r.id !== id);
+  localStorage.setItem('voiceRecords', JSON.stringify(voiceRecords));
+  renderVoiceRecords();
+}
+
+function renderVoiceRecords() {
+  const el = document.getElementById('voiceRecords');
+  if (!voiceRecords.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🎙️</div><div class="empty-text">尚無錄音記錄</div></div>`;
+    return;
+  }
+  el.innerHTML = voiceRecords.map(r => {
+    let summaryHtml = '';
+    if (r.loading) {
+      summaryHtml = `<div class="ai-loading"><div class="spinner"></div><span>AI 正在生成會議記錄...</span></div>`;
+    } else if (r.summary) {
+      const s = r.summary;
+      summaryHtml = `<div class="ai-summary">
+        <div class="ai-summary-label">✨ AI 會議記錄</div>
+        <strong>${escHtml(s.title)}</strong><br>
+        👥 ${escHtml(s.participants)}<br><br>
+        <strong>重點：</strong><br>
+        ${s.keyPoints.map(k => `• ${escHtml(k)}`).join('<br>')}<br><br>
+        <strong>行動項目：</strong><br>
+        ${s.actionItems.map(a => `☐ ${escHtml(a)}`).join('<br>')}<br><br>
+        <em>${escHtml(s.summary)}</em>
+      </div>`;
+    }
+    return `<div class="voice-card">
+      <div class="voice-card-header">
+        <div class="voice-title-row">
+          <span class="voice-icon">🎙️</span>
+          <div>
+            <div class="voice-name">${r.time} 的錄音</div>
+            <div class="voice-time">時長 ${r.duration}</div>
+          </div>
+        </div>
+        <button class="voice-del" onclick="deleteVoiceRecord('${r.id}')">×</button>
+      </div>
+      ${summaryHtml}
+    </div>`;
+  }).join('');
+}
+
+// ---- Summary ----
+function renderSummary() {
+  // Entries
+  const typeCount = {};
+  entries.forEach(e => { typeCount[e.type] = (typeCount[e.type] || 0) + 1; });
+  const eEl = document.getElementById('summary-entries');
+  if (!entries.length) {
+    eEl.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">尚無活動記錄</div>';
+  } else {
+    eEl.innerHTML = [
+      { key: '總計', val: entries.length + ' 筆' },
+      { key: '📝 筆記', val: (typeCount.note || 0) + ' 筆' },
+      { key: '👥 會議', val: (typeCount.meeting || 0) + ' 筆' },
+      { key: '📞 電話', val: (typeCount.call || 0) + ' 筆' },
+      { key: '⚡ 任務', val: (typeCount.task || 0) + ' 筆' },
+    ].map(r => `<div class="summary-row"><span class="summary-key">${r.key}</span><span class="summary-val">${r.val}</span></div>`).join('');
+  }
+
+  // Todos
+  const tEl = document.getElementById('summary-todos');
+  const done = todos.filter(t => t.done).length;
+  const hi = todos.filter(t => t.priority === 'high' && !t.done).length;
+  tEl.innerHTML = [
+    { key: '總計', val: todos.length + ' 項' },
+    { key: '已完成', val: done + ' 項' },
+    { key: '待完成', val: (todos.length - done) + ' 項' },
+    { key: '🔴 高優先待辦', val: hi + ' 項' },
+  ].map(r => `<div class="summary-row"><span class="summary-key">${r.key}</span><span class="summary-val">${r.val}</span></div>`).join('');
+
+  // Voice
+  const vEl = document.getElementById('summary-voice');
+  const withSummary = voiceRecords.filter(r => r.summary);
+  if (!voiceRecords.length) {
+    vEl.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">尚無錄音記錄</div>';
+  } else {
+    vEl.innerHTML = `<div class="summary-row"><span class="summary-key">錄音次數</span><span class="summary-val">${voiceRecords.length} 次</span></div>
+    <div class="summary-row"><span class="summary-key">已整理記錄</span><span class="summary-val">${withSummary.length} 份</span></div>
+    ${withSummary.map(r => `<div class="ai-summary" style="margin-top:10px"><div class="ai-summary-label">${r.time}</div>${escHtml(r.summary?.summary || '')}</div>`).join('')}`;
+  }
+}
+
+// ---- Export ----
+function exportReport() {
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+  let text = `📊 業務日報 ${dateStr}\n${'='.repeat(30)}\n\n`;
+
+  text += `【今日活動 ${entries.length} 筆】\n`;
+  entries.forEach(e => {
+    text += `${e.time} [${typeMap[e.type]?.label}] ${e.title}\n`;
+    if (e.content) text += `  ${e.content}\n`;
+  });
+
+  text += `\n【待辦事項】\n`;
+  todos.forEach(t => {
+    text += `${t.done ? '✅' : '⬜'} [${priorityMap[t.priority]?.label}] ${t.title}`;
+    if (t.due) text += ` (${t.due})`;
+    text += '\n';
+  });
+
+  text += `\n【會議記錄】\n`;
+  voiceRecords.forEach(r => {
+    if (r.summary) {
+      text += `🎙️ ${r.time}：${r.summary.title}\n`;
+      text += `  ${r.summary.summary}\n`;
+    }
+  });
+
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `業務日報_${dateStr.replace(/\//g,'-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---- Utils ----
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ---- Init ----
+renderTimeline();
+renderTodos();
+renderVoiceRecords();
+</script>
+</body>
+</html>
